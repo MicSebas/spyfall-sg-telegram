@@ -2,18 +2,37 @@ import os
 import psycopg2
 import json
 from datetime import datetime as dt
+import random
+import string
+
+chars = string.ascii_uppercase + string.digits
+
+
+def generate_random_string(length=6):
+    return ''.join([random.choice(chars) for _ in range(length)])
+
+
+def string_to_json(s):
+    return json.loads(s)
+
+
+def json_to_string(d):
+    return json.dumps(d)
 
 
 class Database:
-    def __init__(self, reset=False):
-        self.conn = psycopg2.connect(os.environ['DATABASE_URL'], sslmode='require')
+    def __init__(self, url=None, reset=False):
+        if url is not None:
+            self.conn = psycopg2.connect(url, sslmode='require')
+        else:
+            self.conn = psycopg2.connect(os.getenv('DATABASE_URL'), sslmode='require')
         self.cursor = self.conn.cursor()
         if reset:
             self.drop_table('users')
             self.drop_table('game')
         stmt = "CREATE TABLE IF NOT EXISTS users (user_id BIGINT NOT NULL, user_name TEXT NOT NULL, game_room TEXT NOT NULL, master BIT NOT NULL, msg_id BIGINT NOT NULL)"
         self.commit(stmt)
-        stmt = "CREATE TABLE IF NOT EXISTS game (room_id TEXT NOT NULL, game_info TEXT NOT NULL, state TEXT NOT NULL, players TEXT NOT NULL)"
+        stmt = "CREATE TABLE IF NOT EXISTS games (room_id TEXT NOT NULL, master_id BIGINT NOT NULL, master_name TEXT NOT NULL, spies BIGINT NOT NULL, players BIGINT NOT NULL, location TEXT NOT NULL, roles TEXT NOT NULL)"
         self.commit(stmt)
 
     # Low-level functions
@@ -27,6 +46,7 @@ class Database:
         return rows
 
     # Table functions
+    # user_id, user_name, game_room, master, msg_id
     def drop_table(self, table_name):
         stmt = "DROP TABLE IF EXISTS %s" % table_name
         self.commit(stmt)
@@ -66,12 +86,58 @@ class Database:
         self.commit(stmt)
 
     # Game room functions
+    # room_id, master_id, master_name, spies, players, location, roles
+    def get_rooms(self):
+        stmt = "SELECT room_id FROM games WHERE players < 12"
+        rows = self.fetch(stmt)
+        return [row[0] for row in rows]
+
+    def init_room(self, master_id, master_name, spies):
+        room_id = generate_random_string()
+        existing_rooms = self.get_rooms()
+        while room_id in existing_rooms:
+            room_id = generate_random_string()
+        players = 1
+        location = 'init'
+        roles = [master_id]
+        roles = json_to_string(roles)
+        stmt = "INSERT INTO games VALUES ('%s', %d, '%s', %d, %d, '%s', '%s')" % (room_id, master_id, master_name, spies, players, location, roles)
+        self.commit(stmt)
+        return room_id
+
+    def delete_room(self, room_id):
+        stmt = "DELETE FROM games WHERE room_id = '%s'" % room_id
+        self.commit(stmt)
+
+    def get_room_attribute(self, room_id, attribute):
+        if attribute == 'all':
+            attribute = '*'
+        stmt = "SELECT %s FROM games WHERE room_id = %d" % (attribute, room_id)
+        rows = self.fetch(stmt)
+        if attribute == '*':
+            return rows
+        elif rows[0]:
+            a = rows[0][0]
+            if attribute == 'roles':
+                a = string_to_json(a)
+            return a
+        else:
+            return None
+
+    def join_room(self, room_id, user_id):
+        roles = self.get_room_attribute(room_id, 'roles')
+        current_players = self.get_room_attribute(room_id, 'players')
+        new_players = current_players + 1
+        roles.append(user_id)
+        roles = json_to_string(roles)
+        stmt = "UPDATE games SET players = %d WHERE room_id = '%s'" % (new_players, room_id)
+        self.commit(stmt)
+        stmt = "UPDATE games SET roles = '%s' WHERE room_id = '%s'" % (roles, room_id)
+        self.commit(stmt)
 
 
 def main():
-    db = Database()
-    db.drop_table('users')
-    db.drop_table('games')
+    db = Database(True)
 
 
 if __name__ == '__main__':
