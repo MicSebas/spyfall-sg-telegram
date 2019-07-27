@@ -29,7 +29,7 @@ class Database:
         self.cursor = self.conn.cursor()
         if reset:
             self.drop_table('users')
-            self.drop_table('game')
+            self.drop_table('games')
         stmt = "CREATE TABLE IF NOT EXISTS users (user_id BIGINT NOT NULL, user_name TEXT NOT NULL, game_room TEXT NOT NULL, master BIT NOT NULL, msg_id BIGINT NOT NULL)"
         self.commit(stmt)
         stmt = "CREATE TABLE IF NOT EXISTS games (room_id TEXT NOT NULL, master_id BIGINT NOT NULL, master_name TEXT NOT NULL, spies BIGINT NOT NULL, players BIGINT NOT NULL, location TEXT NOT NULL, roles TEXT NOT NULL)"
