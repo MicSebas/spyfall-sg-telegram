@@ -67,7 +67,9 @@ def init_game(bot, update):
     msg_id = update.callback_query.message.message_id
     spies = int(update.callback_query.data[-1])
     room_id = db.init_room(user_id, user_name, spies)
+    print('init room success')
     db.add_user(user_id, user_fullname, room_id, True, msg_id)
+    print('add user success')
     msg = 'Game room ID: *%s*\n\n' % room_id
     msg += 'Waiting for players...\n'
     msg += '1. %s' % user_fullname
@@ -162,9 +164,5 @@ if __name__ == '__main__':
     TOKEN = os.getenv("TOKEN")
     PORT = int(os.getenv("PORT"))
     DATABASE_URL = os.getenv('DATABASE_URL')
-    print(MODE)
-    print(TOKEN)
-    print(PORT)
-    print(DATABASE_URL)
     db = Database(DATABASE_URL, reset=True)
     main()

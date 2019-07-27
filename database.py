@@ -30,7 +30,7 @@ class Database:
         if reset:
             self.drop_table('users')
             self.drop_table('games')
-        stmt = "CREATE TABLE IF NOT EXISTS users (user_id BIGINT NOT NULL, user_name TEXT NOT NULL, game_room TEXT NOT NULL, master BIT NOT NULL, msg_id BIGINT NOT NULL)"
+        stmt = "CREATE TABLE IF NOT EXISTS users (user_id BIGINT NOT NULL, user_name TEXT NOT NULL, game_room TEXT NOT NULL, master INT NOT NULL, msg_id BIGINT NOT NULL)"
         self.commit(stmt)
         stmt = "CREATE TABLE IF NOT EXISTS games (room_id TEXT NOT NULL, master_id BIGINT NOT NULL, master_name TEXT NOT NULL, spies BIGINT NOT NULL, players BIGINT NOT NULL, location TEXT NOT NULL, roles TEXT NOT NULL)"
         self.commit(stmt)
@@ -112,7 +112,7 @@ class Database:
     def get_room_attribute(self, room_id, attribute):
         if attribute == 'all':
             attribute = '*'
-        stmt = "SELECT %s FROM games WHERE room_id = %d" % (attribute, room_id)
+        stmt = "SELECT %s FROM games WHERE room_id = '%s'" % (attribute, room_id)
         rows = self.fetch(stmt)
         if attribute == '*':
             return rows
@@ -137,7 +137,10 @@ class Database:
 
 
 def main():
-    db = Database(True)
+    db = Database()
+    print(db.get_rooms())
+    print(db.get_users())
+    print(db.get_room_attribute('KEX15L', '*'))
 
 
 if __name__ == '__main__':
