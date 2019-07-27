@@ -9,7 +9,7 @@ chars = string.ascii_uppercase + string.digits
 
 
 def generate_random_string(length=6):
-    return ''.join([random.choice(chars) for _ in range(length)])
+    return ''.join(random.choices(chars, k=length))
 
 
 def string_to_json(s):
@@ -72,7 +72,7 @@ class Database:
         rows = self.fetch(stmt)
         if attribute == '*':
             return rows
-        elif rows[0]:
+        elif rows:
             return rows[0][0]
         else:
             return None
@@ -116,7 +116,7 @@ class Database:
         rows = self.fetch(stmt)
         if attribute == '*':
             return rows
-        elif rows[0]:
+        elif rows:
             a = rows[0][0]
             if attribute == 'roles':
                 a = string_to_json(a)
@@ -134,12 +134,45 @@ class Database:
         self.commit(stmt)
         stmt = "UPDATE games SET roles = '%s' WHERE room_id = '%s'" % (roles, room_id)
         self.commit(stmt)
+        return string_to_json(roles)
+
+    def quit_room(self, room_id, user_id):
+        roles = self.get_room_attribute(room_id, 'roles')
+        current_players = self.get_room_attribute(room_id, 'players')
+        new_players = current_players - 1
+        roles.remove(user_id)
+        roles = json_to_string(roles)
+        stmt = "UPDATE games SET players = %d WHERE room_id = '%s'" % (new_players, room_id)
+        self.commit(stmt)
+        stmt = "UPDATE games SET roles = '%s' WHERE room_id = '%s'" % (roles, room_id)
+        self.commit(stmt)
+        return string_to_json(roles)
+
+    def begin_game(self, room_id):
+        locations = json.load(open('locations.json'))
+        selected_location = random.choice(list(locations.keys()))
+        roles_choices = locations[selected_location]
+        no_of_spies = self.get_room_attribute(room_id, 'spies')
+        players = self.get_room_attribute(room_id, 'roles')
+        roles = {}
+        no_of_roles = len(players) - no_of_spies
+        spies = random.sample(players, no_of_spies)
+        for spy in spies:
+            roles[spy] = 'Spy'
+            players.remove(spy)
+        roles_choices = random.sample(roles_choices, no_of_roles)
+        for i in range(len(roles_choices)):
+            roles[players[i]] = roles_choices[i]
+        stmt = "UPDATE games SET location = '%s', roles = '%s' WHERE room_id = '%s'" % (selected_location, json_to_string(roles), room_id)
+        self.commit(stmt)
+        return selected_location, roles
 
 
 def main():
     db = Database()
     print(db.get_rooms())
     print(db.get_users())
+    print(db.get_user_attribute(123, 'game_room'))
 
 
 if __name__ == '__main__':
