@@ -140,7 +140,6 @@ def main():
     db = Database()
     print(db.get_rooms())
     print(db.get_users())
-    print(db.get_room_attribute('KEX15L', '*'))
 
 
 if __name__ == '__main__':

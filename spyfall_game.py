@@ -28,7 +28,7 @@ def cancel(bot, update):
         msg = 'Operation cancelled. Thank you for using Spyfall SG Telegram Bot!'
         bot.edit_message_text(msg, user_id, msg_id)
     else:
-        room_id = db.get_user_attribute(users, 'game_room')
+        room_id = db.get_user_attribute(user_id, 'game_room')
         players = db.get_room_attribute(room_id, 'roles')
         msg = 'Game cancelled by game master. Use /start to start or join a new game!'
         for player_id in players:
@@ -67,9 +67,7 @@ def init_game(bot, update):
     msg_id = update.callback_query.message.message_id
     spies = int(update.callback_query.data[-1])
     room_id = db.init_room(user_id, user_name, spies)
-    print('init room success')
     db.add_user(user_id, user_fullname, room_id, True, msg_id)
-    print('add user success')
     msg = 'Game room ID: *%s*\n\n' % room_id
     msg += 'Waiting for players...\n'
     msg += '1. %s' % user_fullname
