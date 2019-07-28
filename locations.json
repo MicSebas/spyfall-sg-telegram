@@ -313,7 +313,7 @@
   ],
   "National Day Parade": [
     "Minister",
-    "Visitor",
+    "Marching Troop",
     "Marching Band",
     "Food Vendor",
     "MC",
@@ -323,5 +323,44 @@
     "Student",
     "Cleaner",
     "First Aid Officer"
+  ],
+  "Hotel": [
+    "Doorman",
+    "Security Guard",
+    "Manager",
+    "Housekeeper",
+    "Customer",
+    "Bartender",
+    "Bellman",
+    "Receptionist",
+    "Chef",
+    "Businessman",
+    "Shuttle Driver"
+  ],
+  "IT Show": [
+    "Shopper",
+    "Reviewer",
+    "Audiophile",
+    "Shopkeeper",
+    "Janitor",
+    "Flyer Distributor",
+    "Marketer",
+    "Brand Ambassador",
+    "Cashier",
+    "Just Passing Through",
+    "Lost Child"
+  ],
+  "Supermarket": [
+    "Customer",
+    "Cashier",
+    "Butcher",
+    "Janitor",
+    "Security Guard",
+    "Food Sample Demonstrator",
+    "Shelf Stocker",
+    "Shoplifter",
+    "Parents",
+    "Manager",
+    "Lottery Buyer"
   ]
 }

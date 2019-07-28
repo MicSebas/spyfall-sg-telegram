@@ -1,7 +1,7 @@
 import os
 import telegram
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, TelegramError
 from database import Database
 import json
 from time import sleep
@@ -79,19 +79,27 @@ def init_game(bot, update):
 
 
 def join_game(bot, update):
+    print('joining')
     user_id = update.callback_query.from_user.id
+    print(user_id)
     user_fullname = update.callback_query.from_user.first_name + ' ' + update.callback_query.from_user.last_name
     user_fullname = user_fullname.strip()
+    print(user_fullname)
     room_id = update.callback_query.data.split('_')[1]
-    players = db.get_room_attribute(room_id, 'players')
-    if players > 11:
+    print(room_id)
+    no_of_players = db.get_room_attribute(room_id, 'players')
+    print(no_of_players)
+    if no_of_players > 11:
         query_id = update.callback_query.id
         msg = 'This room is at full capacity!'
         bot.answer_callback_query(query_id, msg)
     else:
         msg_id = update.callback_query.message.message_id
+        print(msg_id)
         players = db.join_room(room_id, user_id)
-        db.add_user(user_id, user_fullname, room_id, False, msg_id)
+        print(players)
+        db.add_user(user_id, user_fullname, room_id, 0, msg_id)
+        print('added')
         msg = 'Game room ID: *%s*\n\n' % room_id
         if len(players) < 12:
             msg += 'Waiting for players...\n'
@@ -101,14 +109,27 @@ def join_game(bot, update):
             player_name = db.get_user_attribute(player_id, 'user_name')
             msg += '%d. %s\n' % (i+1, player_name)
         msg = msg.strip()
+        print(msg)
         for player_id in players:
+            print(player_id)
+            player_id = int(player_id)
+            print(player_id)
             msg_id = db.get_user_attribute(player_id, 'msg_id')
-            if db.get_user_attribute(player_id, 'master'):
-                keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('Start Game!', callback_data='begin')],
+            print(msg_id)
+            is_master = db.get_user_attribute(player_id, 'master')
+            print(is_master)
+            if is_master:
+                print('master keyboard')
+                keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('Ready to Begin!', callback_data='begin')],
                                                  [InlineKeyboardButton('Cancel', callback_data='cancel')]])
             else:
+                print('normal keyboard')
                 keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('Quit game', callback_data='quit')]])
-            bot.edit_message_text(msg, user_id, msg_id, reply_markup=keyboard, parse_mode=telegram.ParseMode.MARKDOWN)
+            try:
+                print('sending')
+                bot.edit_message_text(msg, user_id, msg_id, reply_markup=keyboard, parse_mode=telegram.ParseMode.MARKDOWN)
+            except TelegramError:
+                print('Failed to send message to', player_id)
 
 
 def quit_room(bot, update):
@@ -131,7 +152,7 @@ def quit_room(bot, update):
     for player_id in players:
         msg_id = db.get_user_attribute(player_id, 'msg_id')
         if db.get_user_attribute(player_id, 'master'):
-            keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('Start Game!', callback_data='begin')],
+            keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('Ready to Begin!', callback_data='begin')],
                                              [InlineKeyboardButton('Cancel', callback_data='cancel')]])
         else:
             keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('Quit game', callback_data='quit')]])
@@ -309,9 +330,5 @@ if __name__ == '__main__':
     TOKEN = os.getenv("TOKEN")
     PORT = int(os.getenv("PORT"))
     DATABASE_URL = os.getenv('DATABASE_URL')
-    if MODE == 'dev':
-        reset = True
-    else:
-        reset = False
-    db = Database(DATABASE_URL, reset=reset)
+    db = Database(DATABASE_URL, reset=False)
     main()

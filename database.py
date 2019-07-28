@@ -1,7 +1,7 @@
 import os
 import psycopg2
 import json
-from datetime import datetime as dt
+# from datetime import datetime as dt
 import random
 import string
 
@@ -46,12 +46,12 @@ class Database:
         return rows
 
     # Table functions
-    # user_id, user_name, game_room, master, msg_id
     def drop_table(self, table_name):
         stmt = "DROP TABLE IF EXISTS %s" % table_name
         self.commit(stmt)
 
     # User functions
+    # user_id, user_name, game_room, master, msg_id
     def get_users(self):
         stmt = "SELECT user_id FROM users"
         rows = self.fetch(stmt)
@@ -129,12 +129,12 @@ class Database:
         current_players = self.get_room_attribute(room_id, 'players')
         new_players = current_players + 1
         roles.append(user_id)
-        roles = json_to_string(roles)
+        roles_s = json_to_string(roles)
         stmt = "UPDATE games SET players = %d WHERE room_id = '%s'" % (new_players, room_id)
         self.commit(stmt)
-        stmt = "UPDATE games SET roles = '%s' WHERE room_id = '%s'" % (roles, room_id)
+        stmt = "UPDATE games SET roles = '%s' WHERE room_id = '%s'" % (roles_s, room_id)
         self.commit(stmt)
-        return string_to_json(roles)
+        return roles
 
     def quit_room(self, room_id, user_id):
         roles = self.get_room_attribute(room_id, 'roles')
@@ -169,10 +169,15 @@ class Database:
 
 
 def main():
-    db = Database()
-    print(db.get_rooms())
-    print(db.get_users())
-    print(db.get_user_attribute(123, 'game_room'))
+    db = Database(reset=True)
+    # db.add_user(123, 'Tester', '9ILFNN', 1, 123)
+    # db.init_room(123, 'Tester', 1)
+    # room_id = db.init_room(123, 'Tester', 1)
+    # db.add_user(123, 'Tester', room_id, 1, 123)
+    # room_id = 'V8D8AQ'
+    # print(db.get_room_attribute(room_id, '*'))
+    # print(db.get_users())
+    # print(db.get_rooms())
 
 
 if __name__ == '__main__':
