@@ -309,5 +309,9 @@ if __name__ == '__main__':
     TOKEN = os.getenv("TOKEN")
     PORT = int(os.getenv("PORT"))
     DATABASE_URL = os.getenv('DATABASE_URL')
-    db = Database(DATABASE_URL, reset=True)
+    if MODE == 'dev':
+        reset = True
+    else:
+        reset = False
+    db = Database(DATABASE_URL, reset=reset)
     main()
