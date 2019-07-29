@@ -64,8 +64,7 @@ def start_join(bot, update):
 def init_game(bot, update):
     user_id = update.callback_query.from_user.id
     user_name = update.callback_query.from_user.username
-    user_fullname = update.callback_query.from_user.first_name + ' ' + update.callback_query.from_user.last_name
-    user_fullname = user_fullname.strip()
+    user_fullname = update.callback_query.from_user.full_name
     msg_id = update.callback_query.message.message_id
     spies = int(update.callback_query.data[-1])
     room_id = db.init_room(user_id, user_name, spies)
@@ -82,8 +81,7 @@ def join_game(bot, update):
     print('joining')
     user_id = update.callback_query.from_user.id
     print(user_id)
-    user_fullname = update.callback_query.from_user.first_name + ' ' + update.callback_query.from_user.last_name
-    user_fullname = user_fullname.strip()
+    user_fullname = update.callback_query.from_user.full_name
     print(user_fullname)
     room_id = update.callback_query.data.split('_')[1]
     print(room_id)
